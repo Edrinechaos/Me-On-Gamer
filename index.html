@@ -5,17 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Me On Game Tournaments</title>
   <style>
-    /* General styles */
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
       color: #fff;
       position: relative;
-      overflow-x: hidden;
     }
 
-    /* Watermark */
     body::after {
       content: "Edrine Tour";
       position: fixed;
@@ -30,7 +27,7 @@
     header {
       text-align: center;
       padding: 20px;
-      background-color: rgba(20, 20, 20, 0.9);
+      background-color: rgba(20,20,20,0.9);
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
 
@@ -47,7 +44,6 @@
       padding: 0 20px;
     }
 
-    /* League table */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -69,11 +65,16 @@
       background-color: rgba(255,255,255,0.05);
     }
 
-    /* Fixtures section */
+    .top-team {
+      background-color: rgba(0,255,213,0.2);
+      font-weight: bold;
+    }
+
     .fixtures {
-      background-color: rgba(20, 20, 20, 0.9);
+      background-color: rgba(20,20,20,0.9);
       padding: 20px;
       border-radius: 10px;
+      margin-bottom: 40px;
     }
 
     .fixtures h2 {
@@ -84,8 +85,10 @@
     .match {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding: 8px 0;
       border-bottom: 1px solid #333;
+      flex-wrap: wrap;
     }
 
     .match:last-child {
@@ -99,6 +102,30 @@
       border-left: 5px solid #00ffd5;
       font-weight: bold;
     }
+
+    input[type="number"] {
+      width: 50px;
+      padding: 4px;
+      margin: 0 5px;
+      border-radius: 5px;
+      border: none;
+      text-align: center;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      background-color: #00ffd5;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #00e0c0;
+    }
   </style>
 </head>
 <body>
@@ -107,7 +134,6 @@
   </header>
 
   <main>
-    <!-- League Table -->
     <h2 style="text-align:center; color:#00ffd5;">Tournament Standings</h2>
     <table>
       <thead>
@@ -121,66 +147,114 @@
           <th>Points</th>
         </tr>
       </thead>
-      <tbody id="leagueTable">
-        <tr>
-          <td>1</td>
-          <td>Edrine</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>Elvis</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <td>3</td>
-          <td>J Collins</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <td>4</td>
-          <td>Cyber</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <td>5</td>
-          <td>Adamz</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-      </tbody>
+      <tbody id="leagueTable"></tbody>
     </table>
 
-    <!-- Fixtures -->
     <div class="fixtures">
       <h2>Match Fixtures</h2>
-      <div class="match">Edrine vs Elvis</div>
-      <div class="match">J Collins vs Cyber</div>
-      <div class="match">Adamz vs Edrine</div>
-      <div class="match">Elvis vs J Collins</div>
-      <div class="match">Cyber vs Adamz</div>
-
-      <div class="next-match">Next Match: Edrine vs Cyber</div>
+      <div id="fixturesList"></div>
+      <div class="next-match" id="nextMatch"></div>
     </div>
   </main>
+
+  <script>
+    const teams = [
+      {name: "Edrine", played:0, won:0, draw:0, lost:0, points:0},
+      {name: "Elvis", played:0, won:0, draw:0, lost:0, points:0},
+      {name: "J Collins", played:0, won:0, draw:0, lost:0, points:0},
+      {name: "Cyber", played:0, won:0, draw:0, lost:0, points:0},
+      {name: "Adamz", played:0, won:0, draw:0, lost:0, points:0}
+    ];
+
+    // Generate round-robin fixtures
+    const fixtures = [];
+    for(let i=0;i<teams.length;i++){
+      for(let j=i+1;j<teams.length;j++){
+        fixtures.push({team1: teams[i].name, team2: teams[j].name, score1: null, score2: null});
+      }
+    }
+
+    let nextIndex = 0;
+
+    function updateTable() {
+      // Reset table stats
+      teams.forEach(t=>{
+        t.played=0; t.won=0; t.draw=0; t.lost=0; t.points=0;
+      });
+
+      // Calculate stats from results
+      fixtures.forEach(f=>{
+        if(f.score1 !== null && f.score2 !== null){
+          const t1 = teams.find(t=>t.name===f.team1);
+          const t2 = teams.find(t=>t.name===f.team2);
+          t1.played++; t2.played++;
+          if(f.score1>f.score2){ t1.won++; t2.lost++; t1.points+=3; }
+          else if(f.score1<f.score2){ t2.won++; t1.lost++; t2.points+=3; }
+          else { t1.draw++; t2.draw++; t1.points++; t2.points++; }
+        }
+      });
+
+      // Sort by points
+      teams.sort((a,b)=>b.points - a.points);
+
+      const tbody = document.getElementById("leagueTable");
+      tbody.innerHTML = "";
+      teams.forEach((team,index)=>{
+        const tr = document.createElement("tr");
+        if(index===0) tr.classList.add("top-team");
+        tr.innerHTML = `
+          <td>${index+1}</td>
+          <td>${team.name}</td>
+          <td>${team.played}</td>
+          <td>${team.won}</td>
+          <td>${team.draw}</td>
+          <td>${team.lost}</td>
+          <td>${team.points}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function displayFixtures() {
+      const list = document.getElementById("fixturesList");
+      list.innerHTML = "";
+      fixtures.forEach((f,index)=>{
+        const div = document.createElement("div");
+        div.className = "match";
+        const score1 = f.score1 !== null ? f.score1 : "";
+        const score2 = f.score2 !== null ? f.score2 : "";
+        div.innerHTML = `
+          <span>${f.team1} vs ${f.team2}</span>
+          <span>
+            <input type="number" min="0" id="score1-${index}" value="${score1}"> -
+            <input type="number" min="0" id="score2-${index}" value="${score2}">
+            <button onclick="submitResult(${index})">Submit</button>
+          </span>
+        `;
+        list.appendChild(div);
+      });
+      updateNextMatch();
+    }
+
+    function submitResult(index){
+      const s1 = parseInt(document.getElementById(`score1-${index}`).value);
+      const s2 = parseInt(document.getElementById(`score2-${index}`).value);
+      if(isNaN(s1) || isNaN(s2)) return alert("Please enter valid scores!");
+      fixtures[index].score1 = s1;
+      fixtures[index].score2 = s2;
+      updateTable();
+      updateNextMatch();
+    }
+
+    function updateNextMatch(){
+      const nextDiv = document.getElementById("nextMatch");
+      const nextMatch = fixtures.find(f=>f.score1===null || f.score2===null);
+      if(nextMatch) nextDiv.textContent = `Next Match: ${nextMatch.team1} vs ${nextMatch.team2}`;
+      else nextDiv.textContent = "Tournament Completed!";
+    }
+
+    updateTable();
+    displayFixtures();
+  </script>
 </body>
 </html>
